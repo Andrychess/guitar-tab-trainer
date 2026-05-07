@@ -1,12 +1,21 @@
 // ============================================
-// ГЛАВНЫЙ ФАЙЛ ПРИЛОЖЕНИЯ
+// ГЛАВНЫЙ ФАЙЛ ПРИЛОЖЕНИЯ (VK-совместимый)
 // ============================================
 
-// Ждём загрузки DOM
-document.addEventListener('DOMContentLoaded', () => {
+// Функция для отложенной инициализации (ждём DOM)
+function initApp() {
+    console.log('🎸 Инициализация приложения...');
     
     // Инициализация компонентов
     const tabView = new TabView('tabContainer');
+    
+    // Проверяем наличие слайдера
+    const slider = document.getElementById('noteSlider');
+    if (!slider) {
+        console.error('❌ Слайдер не найден!');
+        return;
+    }
+    
     const player = new TabPlayer('noteSlider');
     const speedBtns = document.querySelectorAll('.speed-btn');
     const speedValueSpan = document.getElementById('speedValue');
@@ -14,54 +23,65 @@ document.addEventListener('DOMContentLoaded', () => {
     const randomBtn = document.getElementById('randomTabBtn');
     
     let autoPlayInterval = null;
-    let currentTabId = null;
+    
+    // Добавляем метод formatNote в TabView, если его нет
+    if (!tabView.formatNote) {
+        tabView.formatNote = function(note) {
+            if (note === "—") return "⏸";
+            if (note === "Бас") return "●";
+            if (note === "Бас(4)") return "●⁴";
+            if (note === "Бас(5)") return "●⁵";
+            if (note === "Бас(6)") return "●⁶";
+            return note;
+        };
+    }
     
     // Колбэк при смене ноты
     player.onNoteChange = (index, note) => {
-        tabView.highlightNote(index);
-        if (currentNoteSpan) {
+        if (tabView && tabView.highlightNote) {
+            tabView.highlightNote(index);
+        }
+        if (currentNoteSpan && tabView && tabView.formatNote) {
             currentNoteSpan.textContent = tabView.formatNote(note);
         }
     };
     
     // Обработчик слайдера
-    player.onSliderChange((index) => {
-        // При ручном перемещении останавливаем автопроигрывание
-        stopAutoPlay();
-    });
+    if (player.onSliderChange) {
+        player.onSliderChange((index) => {
+            stopAutoPlay();
+            if (playBtn) playBtn.textContent = '▶';
+        });
+    }
     
-    // Загрузка табулатуры
+    // Функции управления
     function loadTab(tab) {
         if (!tab) return;
         
-        currentTabId = tab.id;
-        tabView.renderTab(tab);
-        player.loadTab(tab);
+        if (tabView && tabView.renderTab) {
+            tabView.renderTab(tab);
+        }
+        if (player && player.loadTab) {
+            player.loadTab(tab);
+        }
         
         // Обновляем информацию
-        updateTabInfo(tab);
-    }
-    
-    // Обновление информации о текущей табулатуре
-    function updateTabInfo(tab) {
-        const tabInfo = document.getElementById('tabInfo');
-        if (tabInfo) {
-            tabInfo.innerHTML = `
-                <span class="tab-badge">📌 ${tab.name}</span>
-                <span class="pattern-length">• ${tab.pattern.length} нот</span>
-            `;
+        const tabNameEl = document.getElementById('tabName');
+        if (tabNameEl) {
+            tabNameEl.textContent = tab.name || '—';
         }
     }
     
-    // Запуск автопроигрывания
     function startAutoPlay() {
         stopAutoPlay();
         
         const speed = getCurrentSpeed();
-        const baseDelay = 1000; // 1 секунда на ноту базово
+        const baseDelay = 1000;
         
         autoPlayInterval = setInterval(() => {
-            player.next();
+            if (player && player.next) {
+                player.next();
+            }
         }, baseDelay / speed);
     }
     
@@ -72,22 +92,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Получить текущую скорость
     function getCurrentSpeed() {
         const activeBtn = document.querySelector('.speed-btn.active');
         if (activeBtn) {
-            return parseFloat(activeBtn.dataset.speed);
+            return parseFloat(activeBtn.dataset.speed) || 1;
         }
         return 1;
     }
     
-    // Обновить UI скорости
     function updateSpeedUI(speed) {
         if (speedValueSpan) {
             speedValueSpan.textContent = speed + 'x';
         }
         
-        // Обновляем активную кнопку
         speedBtns.forEach(btn => {
             const btnSpeed = parseFloat(btn.dataset.speed);
             if (btnSpeed === speed) {
@@ -97,36 +114,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // Перезапускаем автопроигрывание если оно было
         if (autoPlayInterval) {
             startAutoPlay();
         }
     }
     
-    // Загрузить случайную табулатуру
     function loadRandomTab() {
-        const randomTab = getRandomTab();
-        loadTab(randomTab);
+        if (typeof getRandomTab === 'function') {
+            const randomTab = getRandomTab();
+            loadTab(randomTab);
+        } else {
+            console.error('getRandomTab not found');
+        }
     }
     
-    // --- Обработчики событий ---
-    
-    // Случайный перебор
+    // Обработчики
     if (randomBtn) {
         randomBtn.addEventListener('click', () => {
+            stopAutoPlay();
+            if (playBtn) playBtn.textContent = '▶';
             loadRandomTab();
         });
     }
     
-    // Кнопки скорости
-    speedBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const speed = parseFloat(btn.dataset.speed);
-            updateSpeedUI(speed);
-        });
-    });
-    
-    // Автопроигрывание по кнопке Play (если есть)
     const playBtn = document.getElementById('playBtn');
     if (playBtn) {
         playBtn.addEventListener('click', () => {
@@ -140,34 +150,61 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Кнопки ручного управления
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     
     if (prevBtn) {
         prevBtn.addEventListener('click', () => {
             stopAutoPlay();
-            player.prev();
             if (playBtn) playBtn.textContent = '▶';
+            if (player && player.prev) player.prev();
         });
     }
     
     if (nextBtn) {
         nextBtn.addEventListener('click', () => {
             stopAutoPlay();
-            player.next();
             if (playBtn) playBtn.textContent = '▶';
+            if (player && player.next) player.next();
         });
     }
     
-    // ========== ЗАГРУЗКА ПЕРВОЙ ТАБУЛАТУРЫ ==========
-    // Загружаем первый перебор из базы
-    const firstTab = getAllTabs()[0];
-    if (firstTab) {
-        loadTab(firstTab);
-    }
+    speedBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const speed = parseFloat(btn.dataset.speed);
+            updateSpeedUI(speed);
+        });
+    });
     
-    // Выводим в консоль количество доступных переборов
-    console.log(`🎸 Загружено ${getTabsCount()} переборов!`);
-    console.log('Добавить новый перебор можно в файле js/tabs-db.js');
+    // Загрузка первого перебора
+    if (typeof getAllTabs === 'function') {
+        const tabs = getAllTabs();
+        if (tabs && tabs.length > 0) {
+            loadTab(tabs[0]);
+            console.log(`🎸 Загружено ${tabs.length} переборов!`);
+        }
+    } else {
+        console.error('tabs-db.js not loaded properly');
+    }
+}
+
+// Ждём полной загрузки DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    // DOM уже загружен
+    setTimeout(initApp, 100);
+}
+
+// Обработка ошибок VK (подавляем некоторые ошибки)
+window.addEventListener('error', function(e) {
+    // Игнорируем ошибки VK статистики (они не влияют на работу)
+    if (e.message && (
+        e.message.includes('stats.vk-portal.net') ||
+        e.message.includes('apptracer.ru') ||
+        e.message.includes('Cannot destructure property')
+    )) {
+        e.preventDefault();
+        return false;
+    }
 });
