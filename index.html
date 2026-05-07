@@ -5,8 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>🎸 Лента перебора | Школа Гитаристов</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Дополнительные стили для VK */
+        .vk-header {
+            display: none;
+        }
+        body {
+            background: #0a0e17;
+            margin: 0;
+            padding: 0;
+        }
+        /* Адаптация под VK Mini App */
+        .vk-miniapp-fix {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    </style>
 </head>
-<body>
+<body class="vk-miniapp-fix">
     <div class="app">
         <div class="header">
             <h1>🎸 Лента перебора</h1>
@@ -19,7 +35,7 @@
                 <span class="tab-name" id="tabName">—</span>
                 <button class="btn-random" id="randomTabBtn">🎲 Случайный</button>
             </div>
-            <div class="tab-container" id="tabContainer"></div>
+            <div id="tabContainer"></div>
         </div>
 
         <!-- Ползунок -->
@@ -34,7 +50,7 @@
         <!-- Скорость -->
         <div class="speed-section">
             <div class="speed-label">
-                <span>⚡ Скорость движения (базово 1 сек/нота)</span>
+                <span>⚡ Скорость движения</span>
                 <span class="speed-value" id="speedValue">1x</span>
             </div>
             <div class="speed-controls">
@@ -53,7 +69,34 @@
         </div>
     </div>
 
-    <!-- Подключаем файлы -->
+    <!-- VK Bridge - загружается первым и НЕ блокирует -->
+    <script>
+        // Самый ранний инициализатор VK
+        window.vkBridgeReady = false;
+        window.vkBridge = null;
+        
+        // Загружаем VK Bridge
+        const script = document.createElement('script');
+        script.src = 'https://vk.com/js/api/xd_that.js';
+        script.onload = function() {
+            if (window.XDThat) {
+                window.vkBridge = window.XDThat;
+                window.vkBridgeReady = true;
+                console.log('✅ VK Bridge ready');
+                // Отправляем инициализацию
+                try {
+                    window.vkBridge.send('VKWebAppInit', {}, function(data) {
+                        console.log('VKWebAppInit response:', data);
+                    });
+                } catch(e) {
+                    console.warn('VK Bridge send error:', e);
+                }
+            }
+        };
+        document.head.appendChild(script);
+    </script>
+
+    <!-- Наши скрипты -->
     <script src="js/tabs-db.js"></script>
     <script src="js/tabs-view.js"></script>
     <script src="js/player.js"></script>
