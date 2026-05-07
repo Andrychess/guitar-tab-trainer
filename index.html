@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🎸 Лента перебора | Школа Гитаристов</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <h1>🎸 Лента перебора</h1>
+            <p class="subtitle">Веди пальцем под ползунок</p>
+        </div>
+
+        <!-- Табулатура -->
+        <div class="tab-section">
+            <div class="tab-header">
+                <span class="tab-name" id="tabName">—</span>
+                <button class="btn-random" id="randomTabBtn">🎲 Случайный</button>
+            </div>
+            <div class="tab-container" id="tabContainer"></div>
+        </div>
+
+        <!-- Ползунок -->
+        <div class="slider-section">
+            <div class="slider-header">
+                <span>▶ Позиция</span>
+                <span class="current-note" id="currentNote">—</span>
+            </div>
+            <input type="range" id="noteSlider" class="note-slider" min="0" max="0" value="0" step="1">
+        </div>
+
+        <!-- Скорость -->
+        <div class="speed-section">
+            <div class="speed-label">
+                <span>⚡ Скорость движения (базово 1 сек/нота)</span>
+                <span class="speed-value" id="speedValue">1x</span>
+            </div>
+            <div class="speed-controls">
+                <button class="speed-btn" data-speed="0.5">🐢 0.5x</button>
+                <button class="speed-btn active" data-speed="1">⏺ 1x</button>
+                <button class="speed-btn" data-speed="1.5">⚡ 1.5x</button>
+                <button class="speed-btn" data-speed="2">🚀 2x</button>
+            </div>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="controls-section">
+            <button class="ctrl-btn" id="prevBtn">◀ Назад</button>
+            <button class="ctrl-btn" id="playBtn">▶ Играть</button>
+            <button class="ctrl-btn" id="nextBtn">Вперед ▶</button>
+        </div>
+    </div>
+
+    <!-- Подключаем файлы -->
+    <script src="js/tabs-db.js"></script>
+    <script src="js/tabs-view.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
